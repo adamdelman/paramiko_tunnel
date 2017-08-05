@@ -4,6 +4,7 @@ import socketserver
 import threading
 
 import paramiko
+import time
 
 logger = logging.getLogger(
     name=__name__,
@@ -162,6 +163,9 @@ class SSHForwardingHandler(
                         socket_obj=key.fileobj,
                         mask=mask,
                     )
+                    if self.server._BaseServer__is_shut_down.is_set():
+                        break
+                time.sleep(0)
 
     def __del__(
         self,
