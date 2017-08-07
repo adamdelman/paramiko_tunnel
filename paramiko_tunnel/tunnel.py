@@ -2,9 +2,10 @@ import logging
 import selectors
 import socketserver
 import threading
+import time
 
 import paramiko
-import time
+
 
 logger = logging.getLogger(
     name=__name__,
@@ -37,11 +38,10 @@ class Tunnel(
             bind_and_activate=True,
         )
         self.bind_address, self.bind_port = self.server_address
-        server_thread = threading.Thread(
+        self.server_thread = threading.Thread(
             target=self.serve_forever,
+            daemon=True,
         )
-        server_thread.daemon = True
-        server_thread.start()
 
     def __str__(
         self,
@@ -53,10 +53,25 @@ class Tunnel(
             bind_port=self.bind_port,
         )
 
-    def server_close(
+    def start(
         self,
     ):
-        pass
+        self.server_thread.start()
+
+    def __enter__(
+        self,
+    ):
+        self.start()
+
+        return self
+
+    def __exit__(
+        self,
+        exc_type,
+        exc_val,
+        exc_tb,
+    ):
+        self.shutdown()
 
 
 class SSHForwardingHandler(
@@ -106,9 +121,12 @@ class SSHForwardingHandler(
             self.buffer_size,
         )
         if len(data):
-            dest_socket.send(
-                data,
-            )
+            try:
+                dest_socket.send(
+                    data,
+                )
+            except BrokenPipeError:
+                self.finish()
 
     def handle(
         self,
@@ -153,7 +171,7 @@ class SSHForwardingHandler(
                     ),
                 )
 
-                return None
+                self.finish()
 
             while True:
                 events = self.selector.select()
@@ -164,11 +182,18 @@ class SSHForwardingHandler(
                         mask=mask,
                     )
                     if self.server._BaseServer__is_shut_down.is_set():
-                        break
+                        self.finish()
                 time.sleep(0)
 
-    def __del__(
+    def finish(
         self,
     ):
-        self.ssh_channel.close()
+        if self.ssh_channel is not None:
+            self.ssh_channel.shutdown(
+                how=2,
+            )
+            self.ssh_channel.close()
+        self.request.shutdown(
+            2,
+        )
         self.request.close()
