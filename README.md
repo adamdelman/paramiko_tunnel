@@ -19,19 +19,19 @@ client.connect(
     hostname='192.168.0.1',
     port=22,
     username='user',
-    password='hunter2',
+    password='hunter2,
 )
-tunnel = paramiko_tunnel.tunnel.Tunnel(
+with paramiko_tunnel.tunnel.Tunnel(
     paramiko_session=client,
-    dest_host='192.168.0.2',
-    dest_port=80,
-)
+    remote_host='172.16.1.1',
+    remote_port=80,
+) as tunnel:
 
-response = requests.get(
-    url='http://{bind_addr}:{bind_port}'.format(
-        bind_addr=tunnel.bind_address,
-        bind_port=tunnel.bind_port,
-    )
-).content
-print(response)
+    response = requests.get(
+        url='http://{bind_addr}:{bind_port}'.format(
+            bind_addr=tunnel.bind_address,
+            bind_port=tunnel.bind_port,
+        )
+    ).content
+    print(response)
 ~~~

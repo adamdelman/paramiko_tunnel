@@ -21,16 +21,16 @@ class Tunnel(
     def __init__(
         self,
         paramiko_session,
-        dest_host,
-        dest_port,
+        remote_host,
+        remote_port,
         bind_address_and_port=(
             '',
             0,
         ),
     ):
         self.paramiko_session = paramiko_session
-        self.dest_host = dest_host
-        self.dest_port = dest_port
+        self.remote_host = remote_host
+        self.remote_port = remote_port
 
         super().__init__(
             server_address=bind_address_and_port,
@@ -46,9 +46,9 @@ class Tunnel(
     def __str__(
         self,
     ):
-        return 'Tunnel to \'{dest_host}:{dest_port}\', bound at \'{bind_address}:{bind_port}\'.'.format(
-            dest_host=self.dest_host,
-            dest_port=self.dest_port,
+        return 'Tunnel to \'{remote_host}:{remote_port}\', bound at \'{bind_address}:{bind_port}\'.'.format(
+            remote_host=self.remote_host,
+            remote_port=self.remote_port,
             bind_address=self.bind_address,
             bind_port=self.bind_port,
         )
@@ -136,8 +136,8 @@ class SSHForwardingHandler(
             self.ssh_channel = self.server.paramiko_session.get_transport().open_channel(
                 kind='direct-tcpip',
                 dest_addr=(
-                    self.server.dest_host,
-                    self.server.dest_port,
+                    self.server.remote_host,
+                    self.server.remote_port,
                 ),
                 src_addr=peer_name,
             )
@@ -166,8 +166,8 @@ class SSHForwardingHandler(
             if self.ssh_channel is None:
                 logger.warning(
                     msg='Incoming request to {host}:{port} was rejected by the SSH server.'.format(
-                        host=self.server.dest_host,
-                        port=self.server.dest_port,
+                        host=self.server.remote_host,
+                        port=self.server.remote_port,
                     ),
                 )
 
