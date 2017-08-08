@@ -144,8 +144,8 @@ class SSHForwardingHandler(
         except Exception as error:
             logger.error(
                 msg='Incoming request to {host}:{port} failed.'.format(
-                    host=self.server.dest_host,
-                    port=self.server.dest_port,
+                    host=self.server.remote_host,
+                    port=self.server.remote_port,
                 ),
             )
 
