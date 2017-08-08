@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='paramiko_tunnel',
-    version='0.1',
+    version='0.3',
     packages=[
         'paramiko_tunnel',
     ],
